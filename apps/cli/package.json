@@ -1,0 +1,61 @@
+{
+  "name": "xcodit-ai",
+  "version": "0.0.2",
+  "private": false,
+  "type": "module",
+  "description": "Xcodit CLI",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xcodit/xcodit.git",
+    "directory": "apps/cli"
+  },
+  "homepage": "https://xcodit.dev",
+  "keywords": [
+    "xcodit",
+    "cli",
+    "ai",
+    "agent",
+    "shared"
+  ],
+  "bugs": {
+    "url": "https://github.com/xcodit/xcodit/issues"
+  },
+  "bin": {
+    "xcodit": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Xcodit",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "demo": "tsx src/index.ts --demo",
+    "build": "tsup",
+    "prepublishOnly": "pnpm build",
+    "test": "tsx src/tui/__tests__/mouse.test.ts && tsx src/tui/__tests__/input.test.tsx && tsx src/tui/__tests__/composer.test.tsx && tsx src/tui/__tests__/transcript.test.tsx"
+  },
+  "dependencies": {
+    "ink": "^7.1.1",
+    "react": "^19.3.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@xcodit/agent": "workspace:*",
+    "@xcodit/shared": "workspace:*",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.3.0",
+    "ink-testing-library": "^4.0.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

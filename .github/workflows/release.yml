@@ -1,0 +1,52 @@
+name: release
+
+# Push cli-vX.Y.Z to publish xcodit-ai, shared-vX.Y.Z to publish @xcodit/shared.
+# Publishing uses npm trusted publishing: npm checks this workflow's identity,
+# so no token is stored, no one-time password is asked for, and every release
+# carries a provenance statement linking it to this commit.
+on:
+  push:
+    tags: ["cli-v*", "shared-v*"]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: npm with trusted publishing
+        run: npm install -g npm@latest
+
+      - name: Which package
+        id: pkg
+        run: |
+          case "$GITHUB_REF_NAME" in
+            cli-v*)    echo "dir=apps/cli" >> "$GITHUB_OUTPUT";        echo "version=${GITHUB_REF_NAME#cli-v}" >> "$GITHUB_OUTPUT" ;;
+            shared-v*) echo "dir=packages/shared" >> "$GITHUB_OUTPUT"; echo "version=${GITHUB_REF_NAME#shared-v}" >> "$GITHUB_OUTPUT" ;;
+            *) echo "unknown tag $GITHUB_REF_NAME"; exit 1 ;;
+          esac
+      - name: Tag matches package.json
+        working-directory: ${{ steps.pkg.outputs.dir }}
+        run: |
+          actual="$(node -p "require('./package.json').version")"
+          [ "$actual" = "${{ steps.pkg.outputs.version }}" ] || { echo "tag says ${{ steps.pkg.outputs.version }}, package.json says $actual"; exit 1; }
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+
+      # pnpm pack applies publishConfig and resolves workspace: versions; npm publishes the result.
+      - name: Build and pack
+        working-directory: ${{ steps.pkg.outputs.dir }}
+        run: mkdir -p "$RUNNER_TEMP/pkg" && pnpm build && pnpm pack --pack-destination "$RUNNER_TEMP/pkg"
+      - name: Publish
+        run: npm publish "$RUNNER_TEMP"/pkg/*.tgz --access public
